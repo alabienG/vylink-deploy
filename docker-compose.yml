@@ -1,0 +1,91 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# Vylink — Docker Compose de production
+#
+# Prérequis : créer un fichier .env dans le même dossier (cp .env.example .env)
+#
+# Variables requises dans .env :
+#   GITHUB_OWNER       — username ou org GitHub qui héberge les images
+#   POSTGRES_PASSWORD  — mot de passe fort (OBLIGATOIRE)
+#   JWT_SECRET         — secret JWT ≥ 256 bits  (OBLIGATOIRE)
+#
+# Variables optionnelles :
+#   BACKEND_VERSION    — tag de l'image backend  (défaut: latest)
+#   FRONTEND_VERSION   — tag de l'image frontend (défaut: latest)
+#   POSTGRES_DB        — nom de la base          (défaut: vylink)
+#   POSTGRES_USER      — utilisateur postgres    (défaut: vylink)
+#   CORS_ALLOWED_ORIGINS — origines CORS autorisées
+#   LOG_LEVEL          — niveau de log Spring    (défaut: INFO)
+#
+# Démarrage :
+#   docker compose up -d
+#
+# Mise à jour vers une version précise :
+#   BACKEND_VERSION=v1.2.0 FRONTEND_VERSION=v1.2.0 docker compose up -d
+# ══════════════════════════════════════════════════════════════════════════════
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: vylink_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB:-vylink}
+      POSTGRES_USER:     ${POSTGRES_USER:-vylink}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Définissez POSTGRES_PASSWORD dans le fichier .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vylink} -d ${POSTGRES_DB:-vylink}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - vylink-net
+
+  backend:
+    image: ghcr.io/${GITHUB_OWNER:?Définissez GITHUB_OWNER dans le fichier .env}/vylink-backend:${BACKEND_VERSION:-latest}
+    container_name: vylink_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL:    jdbc:postgresql://postgres:5432/${POSTGRES_DB:-vylink}
+      DB_USERNAME:              ${POSTGRES_USER:-vylink}
+      DB_PASSWORD:              ${POSTGRES_PASSWORD}
+      JWT_SECRET:               ${JWT_SECRET:?Définissez JWT_SECRET dans le fichier .env}
+      SPRING_PROFILES_ACTIVE:   docker
+      LOGGING_LEVEL_ORG_VYLINK: ${LOG_LEVEL:-INFO}
+      CORS_ALLOWED_ORIGINS:     ${CORS_ALLOWED_ORIGINS:-http://localhost}
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - vylink-net
+
+  frontend:
+    image: ghcr.io/${GITHUB_OWNER}/vylink-frontend:${FRONTEND_VERSION:-latest}
+    container_name: vylink_frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    networks:
+      - vylink-net
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  vylink-net:
+    driver: bridge
+
