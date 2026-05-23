@@ -14,15 +14,15 @@ sont publiques : aucune authentification requise.
 ### 1. Récupérer les fichiers de déploiement
 
 ```bash
-git clone https://github.com/GITHUB_OWNER/vylink-deploy.git
+git clone https://github.com/alabienG/vylink-deploy.git
 cd vylink-deploy
 ```
 
 > Ou sans git :
 > ```bash
 > mkdir vylink && cd vylink
-> curl -fsSL https://raw.githubusercontent.com/GITHUB_OWNER/vylink-deploy/main/docker-compose.yml -o docker-compose.yml
-> curl -fsSL https://raw.githubusercontent.com/GITHUB_OWNER/vylink-deploy/main/.env.example -o .env.example
+> curl -fsSL https://raw.githubusercontent.com/alabienG/vylink-deploy/main/docker-compose.yml -o docker-compose.yml
+> curl -fsSL https://raw.githubusercontent.com/alabienG/vylink-deploy/main/.env.example -o .env.example
 > ```
 
 ### 2. Configurer l'environnement
@@ -77,7 +77,7 @@ docker compose pull && docker compose up -d
 ```
 
 > Les versions disponibles sont listées sur
-> [ghcr.io/GITHUB_OWNER/vylink-backend](https://github.com/GITHUB_OWNER?tab=packages)
+> [ghcr.io/alabienG/vylink-backend](https://github.com/alabienG?tab=packages)
 
 ---
 
@@ -157,4 +157,7 @@ vylink-deploy/
 ├── .env.example         ← template de configuration
 └── README.md            ← ce fichier
 ```
+
+
+
 
