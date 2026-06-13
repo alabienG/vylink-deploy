@@ -55,9 +55,25 @@ services:
       DB_USERNAME:              ${POSTGRES_USER:-vylink}
       DB_PASSWORD:              ${POSTGRES_PASSWORD}
       JWT_SECRET:               ${JWT_SECRET}
+      # Profil "docker" → DockerDataInitializer crée hôpital initial + admin
+      # avec mot de passe aléatoire écrit dans ${LOG_DIR}/bootstrap-admin.txt
       SPRING_PROFILES_ACTIVE:   docker
       LOGGING_LEVEL_ORG_VYLINK: ${LOG_LEVEL:-INFO}
+      LOG_DIR:                  /var/log/vylink
       CORS_ALLOWED_ORIGINS:     ${CORS_ALLOWED_ORIGINS:-http://localhost}
+      # Bootstrap hôpital (premier démarrage seulement, idempotent)
+      APP_BOOTSTRAP_HOSPITAL_NAME:         ${BOOTSTRAP_HOSPITAL_NAME:-VyLink Hospital}
+      APP_BOOTSTRAP_HOSPITAL_ADDRESS:      ${BOOTSTRAP_HOSPITAL_ADDRESS:-}
+      APP_BOOTSTRAP_HOSPITAL_VILLE:        ${BOOTSTRAP_HOSPITAL_VILLE:-}
+      APP_BOOTSTRAP_HOSPITAL_PAYS:         ${BOOTSTRAP_HOSPITAL_PAYS:-}
+      APP_BOOTSTRAP_HOSPITAL_PHONE_NUMBER: ${BOOTSTRAP_HOSPITAL_PHONE_NUMBER:-}
+      APP_BOOTSTRAP_HOSPITAL_EMAIL:        ${BOOTSTRAP_HOSPITAL_EMAIL:-}
+      APP_BOOTSTRAP_HOSPITAL_SITE_URL:     ${BOOTSTRAP_HOSPITAL_SITE_URL:-}
+      # Bootstrap admin — username configurable, mot de passe généré au runtime
+      APP_BOOTSTRAP_ADMIN_USERNAME:        ${BOOTSTRAP_ADMIN_USERNAME:-admin}
+    volumes:
+      # Logs Spring Boot + fichier bootstrap-admin.txt persistés sur l'hôte
+      - ./logs:/var/log/vylink
     expose:
       - "8080"
     healthcheck:
